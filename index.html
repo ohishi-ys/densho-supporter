@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>伝承サポーター 活動管理アプリ</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --color-bg:#FAFAF8;--color-bg2:#F2F1EE;--color-bg3:#E8E7E3;
+  --color-text:#1A1A18;--color-text2:#5A5A56;--color-text3:#8A8A86;
+  --color-border:#D8D7D3;--color-border2:#C8C7C3;
+  --color-blue-bg:#EBF3FB;--color-blue:#185FA5;
+  --color-green-bg:#EAF3DE;--color-green:#2A5A08;--color-green-bd:#6AAE2A;
+  --color-red-bg:#FCEBEB;--color-red:#8B1A1A;--color-red-bd:#D96060;
+  --color-orange-bg:#FAEEDA;--color-orange:#633806;
+  --color-purple-bg:#EEEDFE;--color-purple:#534AB7;
+  --radius-sm:6px;--radius-md:8px;--radius-lg:12px;
+}
+body{font-family:'Hiragino Sans','Hiragino Kaku Gothic ProN','Noto Sans JP',sans-serif;font-size:15px;color:var(--color-text);background:var(--color-bg);min-height:100vh}
+.container{max-width:700px;margin:0 auto;padding:20px 16px 60px}
+.app-header{margin-bottom:1.5rem;padding-bottom:1rem;border-bottom:0.5px solid var(--color-border)}
+.app-header h1{font-size:18px;font-weight:600;margin-bottom:2px}
+.app-header p{font-size:13px;color:var(--color-text3)}
+.tab-bar{display:flex;gap:6px;margin-bottom:1.5rem;flex-wrap:wrap}
+.tab-btn{padding:7px 14px;border-radius:var(--radius-md);border:0.5px solid var(--color-border);background:transparent;cursor:pointer;font-size:14px;color:var(--color-text2);font-family:inherit}
+.tab-btn.active{background:var(--color-text);color:var(--color-bg);border-color:transparent}
+.tab-btn:hover:not(.active){background:var(--color-bg2)}
+.section{display:none}.section.visible{display:block}
+.card{background:white;border:0.5px solid var(--color-border);border-radius:var(--radius-lg);padding:1rem 1.25rem;margin-bottom:12px}
+input[type=text],input[type=time],input[type=url],input[type=number],textarea,select{width:100%;border:0.5px solid var(--color-border);border-radius:var(--radius-md);padding:8px 12px;font-size:14px;background:white;color:var(--color-text);font-family:inherit}
+input:focus,textarea:focus,select:focus{outline:none;border-color:var(--color-blue)}
+textarea{resize:vertical;min-height:60px}
+label{font-size:13px;color:var(--color-text2);display:block;margin-bottom:4px}
+.btn{padding:8px 20px;border-radius:var(--radius-md);border:0.5px solid var(--color-border);background:transparent;cursor:pointer;font-size:14px;color:var(--color-text);font-family:inherit}
+.btn:hover{background:var(--color-bg2)}
+.btn-primary{background:var(--color-text);color:white;border-color:transparent}
+.btn-primary:hover{opacity:.85}
+.btn-sm{padding:5px 12px;font-size:13px}
+.btn-danger{color:var(--color-red);border-color:var(--color-red-bd)}.btn-danger:hover{background:var(--color-red-bg)}
+.btn-edit{color:var(--color-blue);border-color:#A8CBEC}.btn-edit:hover{background:var(--color-blue-bg)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.form-row{margin-bottom:10px}
+.badge{display:inline-block;font-size:12px;padding:3px 10px;border-radius:var(--radius-md);font-weight:500}
+.badge-join{background:var(--color-green-bg);color:var(--color-green)}
+.badge-absent{background:var(--color-red-bg);color:var(--color-red)}
+.badge-s1{background:var(--color-blue-bg);color:var(--color-blue)}
+.badge-s2{background:var(--color-purple-bg);color:var(--color-purple)}
+.badge-watch{background:var(--color-orange-bg);color:var(--color-orange)}
+.stat-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:1.5rem}
+.stat-card{background:var(--color-bg2);border-radius:var(--radius-md);padding:12px;text-align:center}
+.resp-num{font-size:20px;font-weight:600}
+.resp-lbl{font-size:12px;color:var(--color-text3)}
+.event-card{background:white;border:0.5px solid var(--color-border);border-radius:var(--radius-lg);padding:1rem 1.25rem;margin-bottom:10px}
+.event-title{font-weight:600;font-size:15px}
+.event-meta{font-size:13px;color:var(--color-text2);margin-top:3px}
+.event-detail{font-size:13px;color:var(--color-text2);margin-top:4px;line-height:1.6}
+.resp-summary{display:flex;gap:8px;margin-top:10px;padding-top:10px;border-top:0.5px solid var(--color-border);align-items:center}
+.participant-list{margin-top:8px}
+.participant-row{display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:0.5px solid var(--color-border);font-size:13px}
+.participant-row:last-child{border-bottom:none}
+.avatar{width:28px;height:28px;border-radius:50%;background:var(--color-blue-bg);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:var(--color-blue);flex-shrink:0}
+.notice{background:var(--color-blue-bg);color:var(--color-blue);border-radius:var(--radius-md);padding:10px 14px;font-size:13px;margin-bottom:1rem}
+.notice-ok{background:var(--color-green-bg);color:var(--color-green);border-radius:var(--radius-md);padding:10px 14px;font-size:13px;margin-bottom:1rem}
+.success-msg{background:var(--color-green-bg);color:var(--color-green);border-radius:var(--radius-md);padding:12px 16px;font-size:14px;margin-top:12px;display:none}
+.toggle-group{display:flex;gap:10px}
+.toggle-btn{flex:1;padding:14px 10px;border-radius:var(--radius-md);border:1.5px solid var(--color-border);background:var(--color-bg2);cursor:pointer;font-size:15px;color:var(--color-text2);text-align:center;font-family:inherit;transition:all .15s}
+.toggle-btn:hover{border-color:var(--color-border2);background:white}
+.toggle-btn.sel-join{background:var(--color-green-bg);color:var(--color-green);border-color:var(--color-green-bd);font-weight:600;box-shadow:0 0 0 3px #6AAE2A20}
+.toggle-btn.sel-absent{background:var(--color-red-bg);color:var(--color-red);border-color:var(--color-red-bd);font-weight:600;box-shadow:0 0 0 3px #D9606020}
+.toggle-icon{font-size:20px;display:block;margin-bottom:4px}
+.month-filter{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:1rem}
+.month-btn{padding:5px 12px;border-radius:var(--radius-md);border:0.5px solid var(--color-border);background:transparent;cursor:pointer;font-size:13px;color:var(--color-text2);font-family:inherit}
+.month-btn.active{background:var(--color-text);color:white;border-color:transparent}
+.detail-toggle{font-size:12px;color:var(--color-text3);cursor:pointer;text-decoration:underline;text-underline-offset:2px;display:inline-block;margin-top:6px}
+.detail-block{display:none;margin-top:8px;padding:8px 10px;background:var(--color-bg2);border-radius:var(--radius-md);font-size:13px;line-height:1.6}
+.gas-setting{background:var(--color-bg2);border:0.5px solid var(--color-border);border-radius:var(--radius-lg);padding:1rem 1.25rem;margin-bottom:1.5rem}
+.gas-status{display:inline-block;font-size:12px;padding:3px 10px;border-radius:var(--radius-md);font-weight:500;margin-left:8px}
+.gas-ok{background:var(--color-green-bg);color:var(--color-green)}
+.gas-ng{background:var(--color-red-bg);color:var(--color-red)}
+.sending-msg{background:var(--color-blue-bg);color:var(--color-blue);border-radius:var(--radius-md);padding:10px 14px;font-size:13px;margin-top:10px;display:none}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:100;display:flex;align-items:center;justify-content:center;padding:16px}
+.modal{background:white;border-radius:var(--radius-lg);padding:1.5rem;width:100%;max-width:560px;max-height:90vh;overflow-y:auto;border:0.5px solid var(--color-border)}
+.modal-title{font-size:16px;font-weight:600;margin-bottom:1.25rem}
+.modal-footer{display:flex;justify-content:flex-end;gap:8px;margin-top:1.25rem;padding-top:1rem;border-top:0.5px solid var(--color-border)}
+.date-row{display:flex;gap:8px;align-items:center}
+.date-row select{flex:1}
+.day-display{font-size:13px;color:var(--color-text2);white-space:nowrap;padding:8px 4px}
+.import-zone{border:1.5px dashed var(--color-border);border-radius:var(--radius-lg);padding:1.5rem;text-align:center;cursor:pointer;margin-bottom:1rem;transition:border-color .15s}
+.import-zone:hover{border-color:var(--color-blue);background:var(--color-blue-bg)}
+.import-zone input{display:none}
+.list-month-head{font-size:13px;font-weight:600;color:var(--color-text2);margin:1.25rem 0 8px;padding-bottom:4px;border-bottom:0.5px solid var(--color-border)}
+.list-row{display:flex;gap:12px;align-items:flex-start;padding:10px 0;border-bottom:0.5px solid var(--color-border)}
+.list-row:last-child{border-bottom:none}
+.list-date{min-width:80px;font-size:13px;font-weight:500;color:var(--color-text2);padding-top:2px}
+.list-body{flex:1}
+.list-title{font-weight:600;font-size:14px;margin-bottom:3px}
+.my-status{font-size:12px;padding:2px 8px;border-radius:var(--radius-md);font-weight:500;display:inline-block;margin-top:4px}
+.my-join{background:var(--color-green-bg);color:var(--color-green)}
+.my-absent{background:var(--color-red-bg);color:var(--color-red)}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="app-header">
+    <h1>伝承サポーター 活動管理</h1>
+    <p>活動案件の管理・参加登録アプリ</p>
+  </div>
+
+<div class="modal-overlay" id="edit-modal" style="display:none" onclick="closeModalOutside(event)">
+  <div class="modal">
+    <div class="modal-title">案件を編集</div>
+    <div class="grid2">
+      <div class="form-row"><label>団体名</label><input type="text" id="e-org"></div>
+      <div class="form-row"><label>募集対象</label>
+        <select id="e-type"><option>サポーター1名</option><option>サポーター2名</option><option>見学のみ</option></select>
+      </div>
+    </div>
+    <div class="form-row">
+      <label>日付（月・日を選択 → 曜日が自動表示）</label>
+      <div class="date-row">
+        <select id="e-month" onchange="updateDayAndWeekday()">
+          <option>4月</option><option>5月</option><option>6月</option><option>7月</option>
+          <option>8月</option><option>9月</option><option>10月</option><option>11月</option>
+          <option>12月</option><option>1月</option><option>2月</option><option>3月</option>
+        </select>
+        <select id="e-day-num" onchange="updateWeekday()" style="flex:1.2"></select>
+        <div class="day-display" id="e-weekday-display">―</div>
+      </div>
+    </div>
+    <div class="grid2">
+      <div class="form-row"><label>参加者人数</label><input type="number" id="e-count" min="0"></div>
+      <div></div>
+    </div>
+    <div class="grid2">
+      <div class="form-row"><label>開始時間</label><input type="time" id="e-start"></div>
+      <div class="form-row"><label>終了時間</label><input type="time" id="e-end"></div>
+    </div>
+    <div class="form-row"><label>ガイド内容</label><textarea id="e-guide"></textarea></div>
+    <div class="form-row"><label>備考</label><textarea id="e-memo"></textarea></div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal()">キャンセル</button>
+      <button class="btn btn-primary" onclick="saveEdit()">保存する</button>
+    </div>
+  </div>
+</div>
+
+<div class="tab-bar">
+  <button class="tab-btn active" onclick="switchTab('admin')">管理者画面</button>
+  <button class="tab-btn" onclick="switchTab('list')">案件一覧</button>
+  <button class="tab-btn" onclick="switchTab('student')">参加登録</button>
+  <button class="tab-btn" onclick="switchTab('settings')">設定</button>
+</div>
+
+<div class="section visible" id="tab-admin">
+  <div class="stat-cards" id="admin-stats"></div>
+  <div style="margin-bottom:1.5rem">
+    <div style="font-size:15px;font-weight:600;margin-bottom:8px">Excelから案件をインポート</div>
+    <div class="import-zone" onclick="document.getElementById('xlsx-input').click()">
+      <input type="file" id="xlsx-input" accept=".xlsx,.xls" onchange="importExcel(event)">
+      <div style="font-size:24px;margin-bottom:6px">📂</div>
+      <div style="font-size:14px;font-weight:500">Excelファイルをクリックして選択</div>
+      <div style="font-size:12px;color:var(--color-text3);margin-top:4px">.xlsx / .xls に対応</div>
+    </div>
+    <div id="import-result" style="display:none"></div>
+  </div>
+  <details style="margin-bottom:1.5rem">
+    <summary style="cursor:pointer;font-size:15px;font-weight:600;padding:10px 0;list-style:none">＋ 新しい案件を手動追加</summary>
+    <div class="card" style="margin-top:8px">
+      <div class="grid2">
+        <div class="form-row"><label>団体名</label><input type="text" id="n-org" placeholder="例：○○中学校"></div>
+        <div class="form-row"><label>募集対象</label>
+          <select id="n-type"><option>サポーター1名</option><option>サポーター2名</option><option>見学のみ</option></select>
+        </div>
+      </div>
+      <div class="form-row">
+        <label>日付</label>
+        <div class="date-row">
+          <select id="n-month" onchange="updateNewDayAndWeekday()">
+            <option>4月</option><option>5月</option><option>6月</option><option>7月</option>
+            <option>8月</option><option>9月</option><option>10月</option><option>11月</option>
+            <option>12月</option><option>1月</option><option>2月</option><option>3月</option>
+          </select>
+          <select id="n-day-num" onchange="updateNewWeekday()" style="flex:1.2"></select>
+          <div class="day-display" id="n-weekday-display">―</div>
+        </div>
+      </div>
+      <div class="grid3">
+        <div class="form-row"><label>参加者人数</label><input type="text" id="n-count" placeholder="例：40"></div>
+        <div class="form-row"><label>開始時間</label><input type="time" id="n-start"></div>
+        <div class="form-row"><label>終了時間</label><input type="time" id="n-end"></div>
+      </div>
+      <div class="form-row"><label>ガイド内容</label><textarea id="n-guide" placeholder="例：門脇小学校（60分）..."></textarea></div>
+      <div class="form-row"><label>備考</label><textarea id="n-memo"></textarea></div>
+      <div style="text-align:right"><button class="btn btn-primary" onclick="addEvent()">追加する</button></div>
+    </div>
+  </details>
+  <div class="month-filter" id="month-filter"></div>
+  <div id="admin-event-list"></div>
+</div>
+
+<div class="section" id="tab-list">
+  <h2 style="font-size:17px;font-weight:600;margin-bottom:1rem">活動案件一覧</h2>
+  <div class="notice" id="list-login-notice">名前を入力すると、あなたの回答状況も確認できます。
+    <div style="display:flex;gap:8px;margin-top:8px;align-items:center">
+      <input type="text" id="list-name-input" placeholder="あなたの名前" style="max-width:200px">
+      <button class="btn btn-sm btn-primary" onclick="setListName()">表示</button>
+    </div>
+  </div>
+  <div class="notice" id="list-loggedin-notice" style="display:none"></div>
+  <div class="month-filter" id="list-month-filter"></div>
+  <div id="list-event-list"></div>
+</div>
+
+<div class="section" id="tab-student">
+  <div id="s-name-section">
+    <div class="notice">参加・不参加を入力してください。まず名前を入力してから回答します。</div>
+    <div class="card">
+      <div class="form-row"><label>あなたの名前</label><input type="text" id="student-name" placeholder="例：山田 太郎"></div>
+      <div style="text-align:right"><button class="btn btn-primary" onclick="confirmName()">確認する</button></div>
+    </div>
+  </div>
+  <div id="s-event-section" style="display:none">
+    <div class="notice" id="s-greeting"></div>
+    <div class="month-filter" id="s-month-filter"></div>
+    <div id="s-event-list"></div>
+    <div style="text-align:right;margin-top:1rem">
+      <button class="btn btn-primary" onclick="submitResponses()">回答を送信する</button>
+    </div>
+    <div class="sending-msg" id="sending-msg">メールを送信中...</div>
+    <div class="success-msg" id="success-msg"></div>
+  </div>
+</div>
+
+<div class="section" id="tab-settings">
+  <h2 style="font-size:17px;font-weight:600;margin-bottom:1rem">メール通知の設定</h2>
+  <div class="gas-setting">
+    <div style="display:flex;align-items:center;margin-bottom:12px">
+      <span style="font-size:14px;font-weight:600">Google Apps Script URL</span>
+      <span class="gas-status gas-ng" id="gas-status-badge">未設定</span>
+    </div>
+    <div class="form-row"><label>GASウェブアプリのURL</label>
+      <input type="url" id="gas-url" placeholder="https://script.google.com/macros/s/..." oninput="updateGasStatus()">
+    </div>
+    <div style="display:flex;gap:8px;margin-top:8px;align-items:center">
+      <button class="btn btn-primary btn-sm" onclick="saveGasUrl()">保存する</button>
+      <button class="btn btn-sm" onclick="testEmail()">テスト送信</button>
+      <span id="test-result" style="font-size:13px;color:var(--color-text2)"></span>
+    </div>
+  </div>
+  <div class="notice">GASの設定が完了すると、学生が回答を送信するたびに管理者のGmailに通知メールが届きます。</div>
+</div>
+</div>
+
+<script>
+const MONTHS=['4月','5月','6月','7月','8月','9月','10月','11月','12月','1月','2月','3月'];
+const WEEKDAYS=['日','月','火','水','木','金','土'];
+const FISCAL_YEAR=2026;
+let gasUrl='',listName='',listMonth='all',editingId=null;
+
+function monthNumFromLabel(l){return parseInt(l);}
+function fiscalYearOf(m){return m>=4?FISCAL_YEAR:FISCAL_YEAR+1;}
+function daysInMonth(m){return new Date(fiscalYearOf(m),m,0).getDate();}
+function getWeekday(m,d){return WEEKDAYS[new Date(fiscalYearOf(m),m-1,d).getDay()];}
+function buildDayOptions(sel,m,cur){const n=daysInMonth(m);sel.innerHTML='';for(let i=1;i<=n;i++){const o=document.createElement('option');o.value=i;o.textContent=i+'日';if(i===cur)o.selected=true;sel.appendChild(o);}}
+function makeDayLabel(m,d){return d+'日('+getWeekday(m,d)+')';}
+function updateDayAndWeekday(){const m=monthNumFromLabel(document.getElementById('e-month').value);const sel=document.getElementById('e-day-num');buildDayOptions(sel,m,Math.min(parseInt(sel.value)||1,daysInMonth(m)));updateWeekday();}
+function updateWeekday(){const m=monthNumFromLabel(document.getElementById('e-month').value);const d=parseInt(document.getElementById('e-day-num').value)||1;document.getElementById('e-weekday-display').textContent='('+getWeekday(m,d)+')';}
+function updateNewDayAndWeekday(){const m=monthNumFromLabel(document.getElementById('n-month').value);const sel=document.getElementById('n-day-num');buildDayOptions(sel,m,Math.min(parseInt(sel.value)||1,daysInMonth(m)));updateNewWeekday();}
+function updateNewWeekday(){const m=monthNumFromLabel(document.getElementById('n-month').value);const d=parseInt(document.getElementById('n-day-num').value)||1;document.getElementById('n-weekday-display').textContent='('+getWeekday(m,d)+')';}
+
+function importExcel(event){
+  const file=event.target.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      const wb=XLSX.read(e.target.result,{type:'binary'});let imported=[];
+      wb.SheetNames.forEach(sn=>{
+        const rows=XLSX.utils.sheet_to_json(wb.Sheets[sn],{header:1,defval:''});
+        rows.forEach((row,i)=>{if(i===0)return;const org=String(row[4]||row[1]||'').trim();if(!org)return;let month=String(row[0]||'').trim();if(month&&!month.includes('月'))month+='月';if(!MONTHS.includes(month))month='';imported.push({id:nextId++,month:month||sn,day:String(row[1]||'').trim(),start:String(row[2]||'').trim(),end:String(row[3]||'').trim(),org,count:parseInt(row[5])||0,bands:0,per:0,type:String(row[6]||'').trim(),guide:String(row[7]||'').trim(),memo:String(row[8]||'').trim(),responses:[]});});
+      });
+      if(imported.length>0){if(confirm(imported.length+'件の案件をインポートします。既存の案件に追加してよいですか？')){events=events.concat(imported);renderAdmin();const r=document.getElementById('import-result');r.className='notice-ok';r.style.display='block';r.textContent='✓ '+imported.length+'件をインポートしました。';setTimeout(()=>r.style.display='none',4000);}}else alert('インポートできる案件が見つかりませんでした。');
+    }catch(err){alert('読み込みエラー：'+err.message);}
+    event.target.value='';
+  };
+  reader.readAsBinaryString(file);
+}
+
+function typeBadge(t){if(!t)return'';if(t.includes('サポーター1'))return`<span class="badge badge-s1">サポーター1名</span>`;if(t.includes('サポーター2'))return`<span class="badge badge-s2">サポーター2名</span>`;if(t.includes('見学'))return`<span class="badge badge-watch">見学のみ</span>`;return`<span class="badge" style="background:var(--color-bg2)">${t}</span>`;}
+
+let events=[
+  {id:1,month:'4月',day:'16日(木)',start:'14:00',end:'16:00',org:'古川学園高校創志コース1学年',count:40,bands:2,per:20,type:'サポーター1名',guide:'門脇小学校（60分）、避難経路（10分）、MEET門脇（約15分）',memo:'門脇小学校の多目的学習室にて「語り部さんの講話＋質疑応答」（約30分）の時間も含まれています。',responses:[]},
+  {id:2,month:'5月',day:'7日(木)',start:'13:00',end:'17:00',org:'桜丘高等学校',count:69,bands:4,per:20,type:'見学のみ',guide:'復興祈念公園やその周辺エリアを歩いてガイドします。',memo:'1年間に5～6回ほど実施している形式です。',responses:[]},
+  {id:3,month:'5月',day:'15日(金)',start:'12:30',end:'15:00',org:'大崎市古川東中学校1年生',count:219,bands:6,per:35,type:'見学のみ',guide:'伝承館（30分）、復興祈念公園（30分）',memo:'門脇小学校内のガイドさんが担当します。',responses:[]},
+  {id:4,month:'5月',day:'21日(木)',start:'9:30',end:'12:00',org:'仙台市立上杉山中学校',count:174,bands:5,per:35,type:'サポーター2名',guide:'MEET門脇（20分）、門脇小学校（60分）、避難経路（10分）、伝承館（30分）',memo:'※1班30名を案内します。団体案内に慣れている方優先',responses:[]},
+  {id:5,month:'5月',day:'24日(日)',start:'9:00',end:'11:45',org:'相模原市立緑が丘中学校',count:88,bands:4,per:20,type:'サポーター1名',guide:'門脇小学校（60分）、MEET門脇（20分）、伝承館（30分）、復興祈念公園（アプリ）（25分）',memo:'祈念公園内は津波伝承ARアプリを使用してのご案内となります。',responses:[]},
+  {id:6,month:'5月',day:'27日(水)',start:'9:45',end:'11:40',org:'宮城野中学校（前半）',count:160,bands:8,per:20,type:'サポーター2名',guide:'門脇小学校（外観）（15分）、避難経路（10分）、MEET門脇（30分）、復興祈念公園（50分）',memo:'このプログラムの後は、大川小学校にて語り部ガイドにも参加。',responses:[]},
+  {id:7,month:'5月',day:'27日(水)',start:'13:20',end:'15:15',org:'宮城野中学校（後半）',count:160,bands:8,per:20,type:'サポーター2名',guide:'門脇小学校（外観）（15分）、避難経路（10分）、MEET門脇（30分）、復興祈念公園（50分）',memo:'この前に、大川小学校にて語り部ガイドにも参加。',responses:[]},
+  {id:8,month:'5月',day:'28日(木)',start:'9:00',end:'10:30',org:'仙台市立岩切中学校（前半）',count:74,bands:4,per:20,type:'サポーター1名',guide:'門脇小学校（40分）、避難経路（10分）、MEET門脇（15分）',memo:'このプログラムの後に大川小学校にて語り部ガイドにも参加。',responses:[]},
+  {id:9,month:'5月',day:'28日(木)',start:'11:15',end:'12:45',org:'仙台市立岩切中学校（後半）',count:113,bands:6,per:20,type:'サポーター2名',guide:'門脇小学校（40分）、避難経路（10分）、MEET門脇（15分）',memo:'このプログラムの前に大川小学校にて語り部ガイドにも参加。',responses:[]},
+  {id:10,month:'5月',day:'29日(金)',start:'10:00',end:'12:00',org:'仙台青陵中等教育学校2年生',count:33,bands:2,per:17,type:'見学のみ',guide:'門脇小学校（60分）、避難経路（10分）、MEET門（25分）',memo:'最後に門小の校庭でガイドとの「ディスカッション」（20分）を希望。',responses:[]},
+  {id:11,month:'6月',day:'11日(木)',start:'13:50',end:'15:15',org:'甲陽学院高等学校',count:37,bands:2,per:18,type:'',guide:'伝承館（40分）、祈念公園（アプリ）（25分）、MEET門脇（10分）',memo:'',responses:[]},
+  {id:12,month:'6月',day:'26日(金)',start:'9:00',end:'12:00',org:'宮城県貞山高等学校',count:86,bands:4,per:22,type:'',guide:'門脇小学校（60分）、避難経路（10分）',memo:'',responses:[]},
+];
+let nextId=13,adminMonth='all',studentName='',studentChoices={},sMonth='all';
+
+function switchTab(tab){document.querySelectorAll('.tab-btn').forEach((b,i)=>{const tabs=['admin','list','student','settings'];b.classList.toggle('active',tabs[i]===tab);});['admin','list','student','settings'].forEach(t=>{document.getElementById('tab-'+t).classList.toggle('visible',t===tab);});if(tab==='admin')renderAdmin();if(tab==='list')renderList();}
+
+function openEdit(id){const e=events.find(ev=>ev.id===id);if(!e)return;editingId=id;document.getElementById('e-org').value=e.org;document.getElementById('e-count').value=e.count||'';document.getElementById('e-start').value=e.start||'';document.getElementById('e-end').value=e.end||'';document.getElementById('e-guide').value=e.guide||'';document.getElementById('e-memo').value=e.memo||'';const mSel=document.getElementById('e-month');for(let i=0;i<mSel.options.length;i++)if(mSel.options[i].value===e.month){mSel.selectedIndex=i;break;}const tSel=document.getElementById('e-type');for(let i=0;i<tSel.options.length;i++)if(tSel.options[i].value===e.type){tSel.selectedIndex=i;break;}const mNum=monthNumFromLabel(e.month);const dm=e.day.match(/\d+/);buildDayOptions(document.getElementById('e-day-num'),mNum,dm?parseInt(dm[0]):1);updateWeekday();document.getElementById('edit-modal').style.display='flex';}
+function closeModal(){document.getElementById('edit-modal').style.display='none';editingId=null;}
+function closeModalOutside(ev){if(ev.target===document.getElementById('edit-modal'))closeModal();}
+function saveEdit(){const e=events.find(ev=>ev.id===editingId);if(!e)return;const m=document.getElementById('e-month').value;const mNum=monthNumFromLabel(m);const dNum=parseInt(document.getElementById('e-day-num').value)||1;e.org=document.getElementById('e-org').value.trim()||e.org;e.month=m;e.day=makeDayLabel(mNum,dNum);e.type=document.getElementById('e-type').value;e.count=parseInt(document.getElementById('e-count').value)||e.count;e.start=document.getElementById('e-start').value||e.start;e.end=document.getElementById('e-end').value||e.end;e.guide=document.getElementById('e-guide').value.trim();e.memo=document.getElementById('e-memo').value.trim();closeModal();renderAdmin();}
+
+function renderAdmin(){
+  let jT=0,aT=0;events.forEach(e=>{jT+=e.responses.filter(r=>r.status==='join').length;aT+=e.responses.filter(r=>r.status==='absent').length;});
+  document.getElementById('admin-stats').innerHTML=`<div class="stat-card"><div class="resp-num">${events.length}</div><div class="resp-lbl">登録案件数</div></div><div class="stat-card"><div class="resp-num" style="color:var(--color-green)">${jT}</div><div class="resp-lbl">参加回答数</div></div><div class="stat-card"><div class="resp-num" style="color:var(--color-red)">${aT}</div><div class="resp-lbl">不参加回答数</div></div>`;
+  document.getElementById('month-filter').innerHTML=`<button class="month-btn ${adminMonth==='all'?'active':''}" onclick="setAdminMonth('all')">すべて</button>`+MONTHS.filter(m=>events.some(e=>e.month===m)).map(m=>`<button class="month-btn ${adminMonth===m?'active':''}" onclick="setAdminMonth('${m}')">${m}</button>`).join('');
+  const filtered=adminMonth==='all'?events:events.filter(e=>e.month===adminMonth);
+  document.getElementById('admin-event-list').innerHTML=filtered.map(e=>{const j=e.responses.filter(r=>r.status==='join');const a=e.responses.filter(r=>r.status==='absent');const pR=e.responses.map(r=>`<div class="participant-row"><div style="display:flex;align-items:center;gap:8px"><div class="avatar">${r.name[0]}</div><span>${r.name}</span></div><span class="badge ${r.status==='join'?'badge-join':'badge-absent'}">${r.status==='join'?'参加':'不参加'}</span></div>`).join('');return`<div class="event-card"><div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:8px"><div><div style="display:flex;align-items:center;gap:8px;margin-bottom:4px"><span style="font-size:12px;color:var(--color-text2);font-weight:500">${e.month} ${e.day}</span>${typeBadge(e.type)}</div><div class="event-title">${e.org}</div><div class="event-meta">${e.start}〜${e.end}　参加者 ${e.count}名</div></div><div style="display:flex;gap:6px;flex-shrink:0"><button class="btn btn-sm btn-edit" onclick="openEdit(${e.id})">編集</button><button class="btn btn-sm btn-danger" onclick="deleteEvent(${e.id})">削除</button></div></div>${e.guide?`<div class="event-detail">📍 ${e.guide}</div>`:''}${e.memo?`<span class="detail-toggle" onclick="toggleDetail(this)">備考を見る▼</span><div class="detail-block">${e.memo}</div>`:''}<div class="resp-summary"><span class="badge badge-join">参加 ${j.length}名</span><span class="badge badge-absent">不参加 ${a.length}名</span><span style="font-size:13px;color:var(--color-text3)">回答済 ${e.responses.length}名</span></div>${e.responses.length>0?`<div class="participant-list">${pR}</div>`:''}</div>`;}).join('');
+}
+function setAdminMonth(m){adminMonth=m;renderAdmin();}
+function toggleDetail(el){const b=el.nextElementSibling;const o=b.style.display==='block';b.style.display=o?'none':'block';el.textContent=o?'備考を見る▼':'備考を閉じる▲';}
+function addEvent(){const org=document.getElementById('n-org').value.trim();if(!org){alert('団体名は必須です');return;}const m=document.getElementById('n-month').value;const mNum=monthNumFromLabel(m);const dNum=parseInt(document.getElementById('n-day-num').value)||1;events.push({id:nextId++,month:m,day:makeDayLabel(mNum,dNum),org,start:document.getElementById('n-start').value||'',end:document.getElementById('n-end').value||'',count:parseInt(document.getElementById('n-count').value)||0,bands:0,per:0,type:document.getElementById('n-type').value,guide:document.getElementById('n-guide').value.trim(),memo:document.getElementById('n-memo').value.trim(),responses:[]});['n-org','n-start','n-end','n-count','n-guide','n-memo'].forEach(id=>document.getElementById(id).value='');renderAdmin();}
+function deleteEvent(id){if(!confirm('この案件を削除しますか？'))return;events=events.filter(e=>e.id!==id);renderAdmin();}
+
+function setListName(){const n=document.getElementById('list-name-input').value.trim();if(!n){alert('名前を入力してください');return;}listName=n;document.getElementById('list-login-notice').style.display='none';const nt=document.getElementById('list-loggedin-notice');nt.style.display='block';nt.innerHTML=`<strong>${n}</strong> さんとして表示中。&nbsp;<span style="cursor:pointer;text-decoration:underline;font-size:12px" onclick="clearListName()">変更する</span>`;renderList();}
+function clearListName(){listName='';document.getElementById('list-login-notice').style.display='block';document.getElementById('list-loggedin-notice').style.display='none';document.getElementById('list-name-input').value='';renderList();}
+function renderList(){
+  document.getElementById('list-month-filter').innerHTML=`<button class="month-btn ${listMonth==='all'?'active':''}" onclick="setListMonth('all')">すべて</button>`+MONTHS.filter(m=>events.some(e=>e.month===m)).map(m=>`<button class="month-btn ${listMonth===m?'active':''}" onclick="setListMonth('${m}')">${m}</button>`).join('');
+  const filtered=listMonth==='all'?events:events.filter(e=>e.month===listMonth);const grouped={};filtered.forEach(e=>{if(!grouped[e.month])grouped[e.month]=[];grouped[e.month].push(e);});
+  let html='';MONTHS.filter(m=>grouped[m]).forEach(m=>{html+=`<div class="list-month-head">${m}</div>`;grouped[m].forEach(e=>{const mr=listName?e.responses.find(r=>r.name===listName):null;const mb=mr?`<span class="my-status ${mr.status==='join'?'my-join':'my-absent'}">${mr.status==='join'?'✓ 参加':'✗ 不参加'}</span>`:(listName?`<span class="my-status" style="background:var(--color-bg2);color:var(--color-text3)">未回答</span>`:'');html+=`<div class="list-row"><div class="list-date">${e.day}<br><span style="font-size:12px">${e.start}〜</span></div><div class="list-body"><div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:4px"><span class="list-title">${e.org}</span>${typeBadge(e.type)}</div><div style="font-size:12px;color:var(--color-text2)">参加者 ${e.count}名　${e.start}〜${e.end}</div>${e.guide?`<div style="font-size:12px;color:var(--color-text2);margin-top:4px;line-height:1.6">📍 ${e.guide}</div>`:''}${e.memo?`<span class="detail-toggle" onclick="toggleDetail(this)">備考を見る▼</span><div class="detail-block">${e.memo}</div>`:''}${mb}</div></div>`;});});
+  document.getElementById('list-event-list').innerHTML=html||'<div style="font-size:14px;color:var(--color-text3);padding:1rem 0">案件がありません</div>';
+}
+function setListMonth(m){listMonth=m;renderList();}
+
+function updateGasStatus(){const v=document.getElementById('gas-url').value.trim();const b=document.getElementById('gas-status-badge');if(v.startsWith('https://script.google.com')){b.className='gas-status gas-ok';b.textContent='設定済み';}else{b.className='gas-status gas-ng';b.textContent='未設定';}}
+function saveGasUrl(){const val=document.getElementById('gas-url').value.trim();if(!val.startsWith('https://script.google.com')){alert('正しいGASのURLを入力してください');return;}gasUrl=val;updateGasStatus();document.getElementById('test-result').textContent='保存しました';setTimeout(()=>document.getElementById('test-result').textContent='',2000);}
+async function sendViaGet(name,datetime,responses){const p=new URLSearchParams({name,datetime,responses});const img=new Image();img.src=gasUrl+'?'+p.toString();return new Promise(r=>{img.onload=img.onerror=()=>r();setTimeout(r,3000);});}
+async function testEmail(){const url=document.getElementById('gas-url').value.trim();if(!url){alert('URLを入力してください');return;}gasUrl=url;document.getElementById('test-result').textContent='送信中...';await sendViaGet('テストユーザー',new Date().toLocaleString('ja-JP'),'これはテスト送信です。');document.getElementById('test-result').textContent='送信しました（Gmailを確認してください）';}
+
+function confirmName(){const name=document.getElementById('student-name').value.trim();if(!name){alert('名前を入力してください');return;}studentName=name;studentChoices={};document.getElementById('s-name-section').style.display='none';document.getElementById('s-event-section').style.display='block';document.getElementById('s-greeting').textContent=`${name} さんの回答フォームです。各案件の参加・不参加を選んでください。`;document.getElementById('success-msg').style.display='none';document.getElementById('sending-msg').style.display='none';renderStudentEvents();}
+function renderStudentEvents(){
+  document.getElementById('s-month-filter').innerHTML=`<button class="month-btn ${sMonth==='all'?'active':''}" onclick="setSMonth('all')">すべて</button>`+MONTHS.filter(m=>events.some(e=>e.month===m)).map(m=>`<button class="month-btn ${sMonth===m?'active':''}" onclick="setSMonth('${m}')">${m}</button>`).join('');
+  const filtered=sMonth==='all'?events:events.filter(e=>e.month===sMonth);
+  document.getElementById('s-event-list').innerHTML=filtered.map(e=>{const ex=e.responses.find(r=>r.name===studentName);const cur=studentChoices[e.id]||(ex?ex.status:'');return`<div class="event-card"><div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><span style="font-size:12px;color:var(--color-text2);font-weight:500">${e.month} ${e.day}</span>${typeBadge(e.type)}</div><div class="event-title" style="margin-bottom:2px">${e.org}</div><div class="event-meta" style="margin-bottom:12px">${e.start}〜${e.end}　参加者 ${e.count}名</div>${e.guide?`<div class="event-detail" style="margin-bottom:12px">📍 ${e.guide}</div>`:''}<div class="toggle-group"><button class="toggle-btn ${cur==='join'?'sel-join':''}" onclick="choose(${e.id},'join',this)"><span class="toggle-icon">${cur==='join'?'✅':'⬜'}</span>参加する</button><button class="toggle-btn ${cur==='absent'?'sel-absent':''}" onclick="choose(${e.id},'absent',this)"><span class="toggle-icon">${cur==='absent'?'❌':'⬜'}</span>参加しない</button></div></div>`;}).join('');
+}
+function setSMonth(m){sMonth=m;renderStudentEvents();}
+function choose(eventId,status,btn){studentChoices[eventId]=status;const g=btn.parentElement;g.querySelectorAll('.toggle-btn').forEach(b=>{b.classList.remove('sel-join','sel-absent');b.querySelector('.toggle-icon').textContent='⬜';});btn.classList.add(status==='join'?'sel-join':'sel-absent');btn.querySelector('.toggle-icon').textContent=status==='join'?'✅':'❌';}
+async function submitResponses(){
+  if(Object.keys(studentChoices).length===0){alert('少なくとも1件回答してください');return;}
+  const answered=[];events.forEach(e=>{if(studentChoices[e.id]){const idx=e.responses.findIndex(r=>r.name===studentName);if(idx>=0)e.responses[idx].status=studentChoices[e.id];else e.responses.push({name:studentName,status:studentChoices[e.id]});answered.push({eventName:e.org,month:e.month,day:e.day,status:studentChoices[e.id]});}});
+  if(gasUrl){document.getElementById('sending-msg').style.display='block';await sendViaGet(studentName,new Date().toLocaleString('ja-JP'),answered.map(r=>`・${r.eventName}（${r.month} ${r.day}）：${r.status==='join'?'参加':'不参加'}`).join('\n'));document.getElementById('sending-msg').style.display='none';}
+  document.getElementById('success-msg').style.display='block';document.getElementById('success-msg').textContent=gasUrl?`${studentName} さんの回答を送信しました。管理者にメール通知を送りました。`:`${studentName} さんの回答を送信しました。`;studentChoices={};
+}
+
+buildDayOptions(document.getElementById('n-day-num'),4,1);updateNewWeekday();renderAdmin();
+</script>
+</body></html>
