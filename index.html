@@ -20,16 +20,24 @@
 }
 body{font-family:'Hiragino Sans','Hiragino Kaku Gothic ProN','Noto Sans JP',sans-serif;font-size:15px;color:var(--color-text);background:var(--color-bg);min-height:100vh}
 .container{max-width:700px;margin:0 auto;padding:20px 16px 60px}
-.app-header{margin-bottom:1.5rem;padding-bottom:1rem;border-bottom:0.5px solid var(--color-border)}
-.app-header h1{font-size:18px;font-weight:600;margin-bottom:2px}
-.app-header p{font-size:13px;color:var(--color-text3)}
+.app-header{margin-bottom:1.5rem;padding-bottom:1rem;border-bottom:0.5px solid var(--color-border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.app-header-left h1{font-size:18px;font-weight:600;margin-bottom:2px}
+.app-header-left p{font-size:13px;color:var(--color-text3)}
+.admin-badge{font-size:12px;padding:4px 10px;border-radius:var(--radius-md);background:var(--color-text);color:white;font-weight:500}
+.login-btn{font-size:12px;padding:4px 10px;border-radius:var(--radius-md);border:0.5px solid var(--color-border);background:transparent;cursor:pointer;color:var(--color-text2);font-family:inherit}
+.login-btn:hover{background:var(--color-bg2)}
+.login-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:200;display:flex;align-items:center;justify-content:center;padding:16px}
+.login-box{background:white;border-radius:var(--radius-lg);padding:2rem;width:100%;max-width:360px;border:0.5px solid var(--color-border);text-align:center}
+.login-box h2{font-size:16px;font-weight:600;margin-bottom:6px}
+.login-box p{font-size:13px;color:var(--color-text3);margin-bottom:1.25rem}
+.login-error{font-size:13px;color:var(--color-red);margin-top:8px;display:none}
 .tab-bar{display:flex;gap:6px;margin-bottom:1.5rem;flex-wrap:wrap}
 .tab-btn{padding:7px 14px;border-radius:var(--radius-md);border:0.5px solid var(--color-border);background:transparent;cursor:pointer;font-size:14px;color:var(--color-text2);font-family:inherit}
 .tab-btn.active{background:var(--color-text);color:var(--color-bg);border-color:transparent}
 .tab-btn:hover:not(.active){background:var(--color-bg2)}
 .section{display:none}.section.visible{display:block}
 .card{background:white;border:0.5px solid var(--color-border);border-radius:var(--radius-lg);padding:1rem 1.25rem;margin-bottom:12px}
-input[type=text],input[type=time],input[type=url],input[type=number],textarea,select{width:100%;border:0.5px solid var(--color-border);border-radius:var(--radius-md);padding:8px 12px;font-size:14px;background:white;color:var(--color-text);font-family:inherit}
+input[type=text],input[type=time],input[type=url],input[type=number],input[type=password],textarea,select{width:100%;border:0.5px solid var(--color-border);border-radius:var(--radius-md);padding:8px 12px;font-size:14px;background:white;color:var(--color-text);font-family:inherit}
 input:focus,textarea:focus,select:focus{outline:none;border-color:var(--color-blue)}
 textarea{resize:vertical;min-height:60px}
 label{font-size:13px;color:var(--color-text2);display:block;margin-bottom:4px}
@@ -105,160 +113,211 @@ label{font-size:13px;color:var(--color-text2);display:block;margin-bottom:4px}
 <body>
 <div class="container">
   <div class="app-header">
-    <h1>伝承サポーター 活動管理</h1>
-    <p>活動案件の管理・参加登録アプリ</p>
+    <div class="app-header-left">
+      <h1>伝承サポーター 活動管理</h1>
+      <p>活動案件の管理・参加登録アプリ</p>
+    </div>
+    <div id="header-auth"></div>
   </div>
 
-<div class="modal-overlay" id="edit-modal" style="display:none" onclick="closeModalOutside(event)">
-  <div class="modal">
-    <div class="modal-title">案件を編集</div>
-    <div class="grid2">
-      <div class="form-row"><label>団体名</label><input type="text" id="e-org"></div>
-      <div class="form-row"><label>募集対象</label>
-        <select id="e-type"><option>サポーター1名</option><option>サポーター2名</option><option>見学のみ</option></select>
+  <div class="login-overlay" id="login-overlay" style="display:none">
+    <div class="login-box">
+      <h2>🔐 管理者ログイン</h2>
+      <p>管理者パスワードを入力してください</p>
+      <div class="form-row">
+        <input type="password" id="admin-pw-input" placeholder="パスワード" onkeydown="if(event.key==='Enter')doAdminLogin()">
       </div>
-    </div>
-    <div class="form-row">
-      <label>日付（月・日を選択 → 曜日が自動表示）</label>
-      <div class="date-row">
-        <select id="e-month" onchange="updateDayAndWeekday()">
-          <option>4月</option><option>5月</option><option>6月</option><option>7月</option>
-          <option>8月</option><option>9月</option><option>10月</option><option>11月</option>
-          <option>12月</option><option>1月</option><option>2月</option><option>3月</option>
-        </select>
-        <select id="e-day-num" onchange="updateWeekday()" style="flex:1.2"></select>
-        <div class="day-display" id="e-weekday-display">―</div>
-      </div>
-    </div>
-    <div class="grid2">
-      <div class="form-row"><label>参加者人数</label><input type="number" id="e-count" min="0"></div>
-      <div></div>
-    </div>
-    <div class="grid2">
-      <div class="form-row"><label>開始時間</label><input type="time" id="e-start"></div>
-      <div class="form-row"><label>終了時間</label><input type="time" id="e-end"></div>
-    </div>
-    <div class="form-row"><label>ガイド内容</label><textarea id="e-guide"></textarea></div>
-    <div class="form-row"><label>備考</label><textarea id="e-memo"></textarea></div>
-    <div class="modal-footer">
-      <button class="btn" onclick="closeModal()">キャンセル</button>
-      <button class="btn btn-primary" onclick="saveEdit()">保存する</button>
+      <button class="btn btn-primary" style="width:100%;margin-top:4px" onclick="doAdminLogin()">ログイン</button>
+      <div class="login-error" id="login-error">パスワードが違います</div>
+      <div style="margin-top:12px"><button class="btn btn-sm" onclick="closeLoginOverlay()">キャンセル</button></div>
     </div>
   </div>
-</div>
 
-<div class="tab-bar">
-  <button class="tab-btn active" onclick="switchTab('admin')">管理者画面</button>
-  <button class="tab-btn" onclick="switchTab('list')">案件一覧</button>
-  <button class="tab-btn" onclick="switchTab('student')">参加登録</button>
-  <button class="tab-btn" onclick="switchTab('settings')">設定</button>
-</div>
-
-<div class="section visible" id="tab-admin">
-  <div class="stat-cards" id="admin-stats"></div>
-  <div style="margin-bottom:1.5rem">
-    <div style="font-size:15px;font-weight:600;margin-bottom:8px">Excelから案件をインポート</div>
-    <div class="import-zone" onclick="document.getElementById('xlsx-input').click()">
-      <input type="file" id="xlsx-input" accept=".xlsx,.xls" onchange="importExcel(event)">
-      <div style="font-size:24px;margin-bottom:6px">📂</div>
-      <div style="font-size:14px;font-weight:500">Excelファイルをクリックして選択</div>
-      <div style="font-size:12px;color:var(--color-text3);margin-top:4px">.xlsx / .xls に対応</div>
-    </div>
-    <div id="import-result" style="display:none"></div>
-  </div>
-  <details style="margin-bottom:1.5rem">
-    <summary style="cursor:pointer;font-size:15px;font-weight:600;padding:10px 0;list-style:none">＋ 新しい案件を手動追加</summary>
-    <div class="card" style="margin-top:8px">
+  <div class="modal-overlay" id="edit-modal" style="display:none" onclick="closeModalOutside(event)">
+    <div class="modal">
+      <div class="modal-title">案件を編集</div>
       <div class="grid2">
-        <div class="form-row"><label>団体名</label><input type="text" id="n-org" placeholder="例：○○中学校"></div>
+        <div class="form-row"><label>団体名</label><input type="text" id="e-org"></div>
         <div class="form-row"><label>募集対象</label>
-          <select id="n-type"><option>サポーター1名</option><option>サポーター2名</option><option>見学のみ</option></select>
+          <select id="e-type"><option>サポーター1名</option><option>サポーター2名</option><option>見学のみ</option></select>
         </div>
       </div>
       <div class="form-row">
-        <label>日付</label>
+        <label>日付（月・日を選択 → 曜日が自動表示）</label>
         <div class="date-row">
-          <select id="n-month" onchange="updateNewDayAndWeekday()">
+          <select id="e-month" onchange="updateDayAndWeekday()">
             <option>4月</option><option>5月</option><option>6月</option><option>7月</option>
             <option>8月</option><option>9月</option><option>10月</option><option>11月</option>
             <option>12月</option><option>1月</option><option>2月</option><option>3月</option>
           </select>
-          <select id="n-day-num" onchange="updateNewWeekday()" style="flex:1.2"></select>
-          <div class="day-display" id="n-weekday-display">―</div>
+          <select id="e-day-num" onchange="updateWeekday()" style="flex:1.2"></select>
+          <div class="day-display" id="e-weekday-display">―</div>
         </div>
       </div>
-      <div class="grid3">
-        <div class="form-row"><label>参加者人数</label><input type="text" id="n-count" placeholder="例：40"></div>
-        <div class="form-row"><label>開始時間</label><input type="time" id="n-start"></div>
-        <div class="form-row"><label>終了時間</label><input type="time" id="n-end"></div>
+      <div class="grid2">
+        <div class="form-row"><label>参加者人数</label><input type="number" id="e-count" min="0"></div>
+        <div></div>
       </div>
-      <div class="form-row"><label>ガイド内容</label><textarea id="n-guide" placeholder="例：門脇小学校（60分）..."></textarea></div>
-      <div class="form-row"><label>備考</label><textarea id="n-memo"></textarea></div>
-      <div style="text-align:right"><button class="btn btn-primary" onclick="addEvent()">追加する</button></div>
+      <div class="grid2">
+        <div class="form-row"><label>開始時間</label><input type="time" id="e-start"></div>
+        <div class="form-row"><label>終了時間</label><input type="time" id="e-end"></div>
+      </div>
+      <div class="form-row"><label>ガイド内容</label><textarea id="e-guide"></textarea></div>
+      <div class="form-row"><label>備考</label><textarea id="e-memo"></textarea></div>
+      <div class="modal-footer">
+        <button class="btn" onclick="closeModal()">キャンセル</button>
+        <button class="btn btn-primary" onclick="saveEdit()">保存する</button>
+      </div>
     </div>
-  </details>
-  <div class="month-filter" id="month-filter"></div>
-  <div id="admin-event-list"></div>
-</div>
+  </div>
 
-<div class="section" id="tab-list">
-  <h2 style="font-size:17px;font-weight:600;margin-bottom:1rem">活動案件一覧</h2>
-  <div class="notice" id="list-login-notice">名前を入力すると、あなたの回答状況も確認できます。
-    <div style="display:flex;gap:8px;margin-top:8px;align-items:center">
-      <input type="text" id="list-name-input" placeholder="あなたの名前" style="max-width:200px">
-      <button class="btn btn-sm btn-primary" onclick="setListName()">表示</button>
+  <div class="tab-bar" id="tab-bar"></div>
+  <div class="section" id="tab-admin">
+    <div class="stat-cards" id="admin-stats"></div>
+    <div style="margin-bottom:1.5rem">
+      <div style="font-size:15px;font-weight:600;margin-bottom:8px">Excelから案件をインポート</div>
+      <div class="import-zone" onclick="document.getElementById('xlsx-input').click()">
+        <input type="file" id="xlsx-input" accept=".xlsx,.xls" onchange="importExcel(event)">
+        <div style="font-size:24px;margin-bottom:6px">📂</div>
+        <div style="font-size:14px;font-weight:500">Excelファイルをクリックして選択</div>
+        <div style="font-size:12px;color:var(--color-text3);margin-top:4px">.xlsx / .xls に対応</div>
+      </div>
+      <div id="import-result" style="display:none"></div>
     </div>
+    <details style="margin-bottom:1.5rem">
+      <summary style="cursor:pointer;font-size:15px;font-weight:600;padding:10px 0;list-style:none">＋ 新しい案件を手動追加</summary>
+      <div class="card" style="margin-top:8px">
+        <div class="grid2">
+          <div class="form-row"><label>団体名</label><input type="text" id="n-org" placeholder="例：○○中学校"></div>
+          <div class="form-row"><label>募集対象</label>
+            <select id="n-type"><option>サポーター1名</option><option>サポーター2名</option><option>見学のみ</option></select>
+          </div>
+        </div>
+        <div class="form-row">
+          <label>日付</label>
+          <div class="date-row">
+            <select id="n-month" onchange="updateNewDayAndWeekday()">
+              <option>4月</option><option>5月</option><option>6月</option><option>7月</option>
+              <option>8月</option><option>9月</option><option>10月</option><option>11月</option>
+              <option>12月</option><option>1月</option><option>2月</option><option>3月</option>
+            </select>
+            <select id="n-day-num" onchange="updateNewWeekday()" style="flex:1.2"></select>
+            <div class="day-display" id="n-weekday-display">―</div>
+          </div>
+        </div>
+        <div class="grid3">
+          <div class="form-row"><label>参加者人数</label><input type="text" id="n-count" placeholder="例：40"></div>
+          <div class="form-row"><label>開始時間</label><input type="time" id="n-start"></div>
+          <div class="form-row"><label>終了時間</label><input type="time" id="n-end"></div>
+        </div>
+        <div class="form-row"><label>ガイド内容</label><textarea id="n-guide" placeholder="例：門脇小学校（60分）..."></textarea></div>
+        <div class="form-row"><label>備考</label><textarea id="n-memo"></textarea></div>
+        <div style="text-align:right"><button class="btn btn-primary" onclick="addEvent()">追加する</button></div>
+      </div>
+    </details>
+    <div class="month-filter" id="month-filter"></div>
+    <div id="admin-event-list"></div>
   </div>
-  <div class="notice" id="list-loggedin-notice" style="display:none"></div>
-  <div class="month-filter" id="list-month-filter"></div>
-  <div id="list-event-list"></div>
-</div>
 
-<div class="section" id="tab-student">
-  <div id="s-name-section">
-    <div class="notice">参加・不参加を入力してください。まず名前を入力してから回答します。</div>
-    <div class="card">
-      <div class="form-row"><label>あなたの名前</label><input type="text" id="student-name" placeholder="例：山田 太郎"></div>
-      <div style="text-align:right"><button class="btn btn-primary" onclick="confirmName()">確認する</button></div>
+  <div class="section" id="tab-list">
+    <h2 style="font-size:17px;font-weight:600;margin-bottom:1rem">活動案件一覧</h2>
+    <div class="notice" id="list-login-notice">名前を入力すると、あなたの回答状況も確認できます。
+      <div style="display:flex;gap:8px;margin-top:8px;align-items:center">
+        <input type="text" id="list-name-input" placeholder="あなたの名前" style="max-width:200px">
+        <button class="btn btn-sm btn-primary" onclick="setListName()">表示</button>
+      </div>
     </div>
+    <div class="notice" id="list-loggedin-notice" style="display:none"></div>
+    <div class="month-filter" id="list-month-filter"></div>
+    <div id="list-event-list"></div>
   </div>
-  <div id="s-event-section" style="display:none">
-    <div class="notice" id="s-greeting"></div>
-    <div class="month-filter" id="s-month-filter"></div>
-    <div id="s-event-list"></div>
-    <div style="text-align:right;margin-top:1rem">
-      <button class="btn btn-primary" onclick="submitResponses()">回答を送信する</button>
-    </div>
-    <div class="sending-msg" id="sending-msg">メールを送信中...</div>
-    <div class="success-msg" id="success-msg"></div>
-  </div>
-</div>
 
-<div class="section" id="tab-settings">
-  <h2 style="font-size:17px;font-weight:600;margin-bottom:1rem">メール通知の設定</h2>
-  <div class="gas-setting">
-    <div style="display:flex;align-items:center;margin-bottom:12px">
-      <span style="font-size:14px;font-weight:600">Google Apps Script URL</span>
-      <span class="gas-status gas-ng" id="gas-status-badge">未設定</span>
+  <div class="section" id="tab-student">
+    <div id="s-name-section">
+      <div class="notice">参加・不参加を入力してください。まず名前を入力してから回答します。</div>
+      <div class="card">
+        <div class="form-row"><label>あなたの名前</label><input type="text" id="student-name" placeholder="例：山田 太郎"></div>
+        <div style="text-align:right"><button class="btn btn-primary" onclick="confirmName()">確認する</button></div>
+      </div>
     </div>
-    <div class="form-row"><label>GASウェブアプリのURL</label>
-      <input type="url" id="gas-url" placeholder="https://script.google.com/macros/s/..." oninput="updateGasStatus()">
-    </div>
-    <div style="display:flex;gap:8px;margin-top:8px;align-items:center">
-      <button class="btn btn-primary btn-sm" onclick="saveGasUrl()">保存する</button>
-      <button class="btn btn-sm" onclick="testEmail()">テスト送信</button>
-      <span id="test-result" style="font-size:13px;color:var(--color-text2)"></span>
+    <div id="s-event-section" style="display:none">
+      <div class="notice" id="s-greeting"></div>
+      <div class="month-filter" id="s-month-filter"></div>
+      <div id="s-event-list"></div>
+      <div style="text-align:right;margin-top:1rem">
+        <button class="btn btn-primary" onclick="submitResponses()">回答を送信する</button>
+      </div>
+      <div class="sending-msg" id="sending-msg">メールを送信中...</div>
+      <div class="success-msg" id="success-msg"></div>
     </div>
   </div>
-  <div class="notice">GASの設定が完了すると、学生が回答を送信するたびに管理者のGmailに通知メールが届きます。</div>
-</div>
+
+  <div class="section" id="tab-settings">
+    <h2 style="font-size:17px;font-weight:600;margin-bottom:1rem">メール通知の設定</h2>
+    <div class="gas-setting">
+      <div style="display:flex;align-items:center;margin-bottom:12px">
+        <span style="font-size:14px;font-weight:600">Google Apps Script URL</span>
+        <span class="gas-status gas-ng" id="gas-status-badge">未設定</span>
+      </div>
+      <div class="form-row"><label>GASウェブアプリのURL</label>
+        <input type="url" id="gas-url" placeholder="https://script.google.com/macros/s/..." oninput="updateGasStatus()">
+      </div>
+      <div style="display:flex;gap:8px;margin-top:8px;align-items:center">
+        <button class="btn btn-primary btn-sm" onclick="saveGasUrl()">保存する</button>
+        <button class="btn btn-sm" onclick="testEmail()">テスト送信</button>
+        <span id="test-result" style="font-size:13px;color:var(--color-text2)"></span>
+      </div>
+    </div>
+    <div class="notice">GASの設定が完了すると、学生が回答を送信するたびに管理者のGmailに通知メールが届きます。</div>
+  </div>
 </div>
 
 <script>
+// =============================================
+// ★ 管理者パスワードはここを変更してください ★
+const ADMIN_PASSWORD = 'densho2026';
+// =============================================
+
 const MONTHS=['4月','5月','6月','7月','8月','9月','10月','11月','12月','1月','2月','3月'];
 const WEEKDAYS=['日','月','火','水','木','金','土'];
 const FISCAL_YEAR=2026;
-let gasUrl='',listName='',listMonth='all',editingId=null;
+let isAdmin=false,gasUrl='',listName='',listMonth='all',editingId=null;
+let adminMonth='all',studentName='',studentChoices={},sMonth='all';
+
+function renderHeader(){
+  const el=document.getElementById('header-auth');
+  if(isAdmin){
+    el.innerHTML=`<span class="admin-badge">管理者モード</span> <button class="login-btn" onclick="doLogout()" style="margin-left:6px">ログアウト</button>`;
+  }else{
+    el.innerHTML=`<button class="login-btn" onclick="openLoginOverlay()">管理者ログイン</button>`;
+  }
+}
+function openLoginOverlay(){document.getElementById('login-overlay').style.display='flex';document.getElementById('admin-pw-input').value='';document.getElementById('login-error').style.display='none';setTimeout(()=>document.getElementById('admin-pw-input').focus(),100);}
+function closeLoginOverlay(){document.getElementById('login-overlay').style.display='none';}
+function doAdminLogin(){
+  if(document.getElementById('admin-pw-input').value===ADMIN_PASSWORD){
+    isAdmin=true;closeLoginOverlay();renderHeader();renderTabBar();switchTab('admin');
+  }else{
+    document.getElementById('login-error').style.display='block';
+    document.getElementById('admin-pw-input').value='';
+    document.getElementById('admin-pw-input').focus();
+  }
+}
+function doLogout(){if(!confirm('管理者モードからログアウトしますか？'))return;isAdmin=false;renderHeader();renderTabBar();switchTab('list');}
+
+function renderTabBar(){
+  const tabs=isAdmin
+    ?[{id:'admin',label:'管理者画面'},{id:'list',label:'案件一覧'},{id:'student',label:'参加登録'},{id:'settings',label:'設定'}]
+    :[{id:'list',label:'案件一覧'},{id:'student',label:'参加登録'}];
+  document.getElementById('tab-bar').innerHTML=tabs.map(t=>`<button class="tab-btn" id="tabbtn-${t.id}" onclick="switchTab('${t.id}')">${t.label}</button>`).join('');
+}
+function switchTab(tab){
+  if(!isAdmin&&(tab==='admin'||tab==='settings'))return;
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  const btn=document.getElementById('tabbtn-'+tab);if(btn)btn.classList.add('active');
+  ['admin','list','student','settings'].forEach(t=>document.getElementById('tab-'+t).classList.toggle('visible',t===tab));
+  if(tab==='admin')renderAdmin();if(tab==='list')renderList();
+}
 
 function monthNumFromLabel(l){return parseInt(l);}
 function fiscalYearOf(m){return m>=4?FISCAL_YEAR:FISCAL_YEAR+1;}
@@ -277,10 +336,7 @@ function importExcel(event){
   reader.onload=function(e){
     try{
       const wb=XLSX.read(e.target.result,{type:'binary'});let imported=[];
-      wb.SheetNames.forEach(sn=>{
-        const rows=XLSX.utils.sheet_to_json(wb.Sheets[sn],{header:1,defval:''});
-        rows.forEach((row,i)=>{if(i===0)return;const org=String(row[4]||row[1]||'').trim();if(!org)return;let month=String(row[0]||'').trim();if(month&&!month.includes('月'))month+='月';if(!MONTHS.includes(month))month='';imported.push({id:nextId++,month:month||sn,day:String(row[1]||'').trim(),start:String(row[2]||'').trim(),end:String(row[3]||'').trim(),org,count:parseInt(row[5])||0,bands:0,per:0,type:String(row[6]||'').trim(),guide:String(row[7]||'').trim(),memo:String(row[8]||'').trim(),responses:[]});});
-      });
+      wb.SheetNames.forEach(sn=>{const rows=XLSX.utils.sheet_to_json(wb.Sheets[sn],{header:1,defval:''});rows.forEach((row,i)=>{if(i===0)return;const org=String(row[4]||row[1]||'').trim();if(!org)return;let month=String(row[0]||'').trim();if(month&&!month.includes('月'))month+='月';if(!MONTHS.includes(month))month='';imported.push({id:nextId++,month:month||sn,day:String(row[1]||'').trim(),start:String(row[2]||'').trim(),end:String(row[3]||'').trim(),org,count:parseInt(row[5])||0,bands:0,per:0,type:String(row[6]||'').trim(),guide:String(row[7]||'').trim(),memo:String(row[8]||'').trim(),responses:[]});});});
       if(imported.length>0){if(confirm(imported.length+'件の案件をインポートします。既存の案件に追加してよいですか？')){events=events.concat(imported);renderAdmin();const r=document.getElementById('import-result');r.className='notice-ok';r.style.display='block';r.textContent='✓ '+imported.length+'件をインポートしました。';setTimeout(()=>r.style.display='none',4000);}}else alert('インポートできる案件が見つかりませんでした。');
     }catch(err){alert('読み込みエラー：'+err.message);}
     event.target.value='';
@@ -304,9 +360,7 @@ let events=[
   {id:11,month:'6月',day:'11日(木)',start:'13:50',end:'15:15',org:'甲陽学院高等学校',count:37,bands:2,per:18,type:'',guide:'伝承館（40分）、祈念公園（アプリ）（25分）、MEET門脇（10分）',memo:'',responses:[]},
   {id:12,month:'6月',day:'26日(金)',start:'9:00',end:'12:00',org:'宮城県貞山高等学校',count:86,bands:4,per:22,type:'',guide:'門脇小学校（60分）、避難経路（10分）',memo:'',responses:[]},
 ];
-let nextId=13,adminMonth='all',studentName='',studentChoices={},sMonth='all';
-
-function switchTab(tab){document.querySelectorAll('.tab-btn').forEach((b,i)=>{const tabs=['admin','list','student','settings'];b.classList.toggle('active',tabs[i]===tab);});['admin','list','student','settings'].forEach(t=>{document.getElementById('tab-'+t).classList.toggle('visible',t===tab);});if(tab==='admin')renderAdmin();if(tab==='list')renderList();}
+let nextId=13;
 
 function openEdit(id){const e=events.find(ev=>ev.id===id);if(!e)return;editingId=id;document.getElementById('e-org').value=e.org;document.getElementById('e-count').value=e.count||'';document.getElementById('e-start').value=e.start||'';document.getElementById('e-end').value=e.end||'';document.getElementById('e-guide').value=e.guide||'';document.getElementById('e-memo').value=e.memo||'';const mSel=document.getElementById('e-month');for(let i=0;i<mSel.options.length;i++)if(mSel.options[i].value===e.month){mSel.selectedIndex=i;break;}const tSel=document.getElementById('e-type');for(let i=0;i<tSel.options.length;i++)if(tSel.options[i].value===e.type){tSel.selectedIndex=i;break;}const mNum=monthNumFromLabel(e.month);const dm=e.day.match(/\d+/);buildDayOptions(document.getElementById('e-day-num'),mNum,dm?parseInt(dm[0]):1);updateWeekday();document.getElementById('edit-modal').style.display='flex';}
 function closeModal(){document.getElementById('edit-modal').style.display='none';editingId=null;}
@@ -355,6 +409,7 @@ async function submitResponses(){
   document.getElementById('success-msg').style.display='block';document.getElementById('success-msg').textContent=gasUrl?`${studentName} さんの回答を送信しました。管理者にメール通知を送りました。`:`${studentName} さんの回答を送信しました。`;studentChoices={};
 }
 
-buildDayOptions(document.getElementById('n-day-num'),4,1);updateNewWeekday();renderAdmin();
+buildDayOptions(document.getElementById('n-day-num'),4,1);updateNewWeekday();
+renderHeader();renderTabBar();switchTab('list');
 </script>
 </body></html>
